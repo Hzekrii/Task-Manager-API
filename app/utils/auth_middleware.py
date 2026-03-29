@@ -3,7 +3,7 @@ from flask import request
 import jwt
 from app.config import Config
 from app.models import User
-
+from app import db
 
 def token_required(f):
     """
@@ -30,7 +30,7 @@ def token_required(f):
                 Config.SECRET_KEY,
                 algorithms=['HS256']
             )
-            current_user = User.query.get(payload['user_id'])
+            current_user = db.session.get(User, payload['user_id'])
 
             if current_user is None:
                 return {'message': 'Utilisateur introuvable.'}, 401
