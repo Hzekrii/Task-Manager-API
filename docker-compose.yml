@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # ── Base de données PostgreSQL ──
+  db:
+    image: postgres:15-alpine
+    container_name: taskmanager_db
+    environment:
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass
+      POSTGRES_DB: taskdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d taskdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Application Flask ──
+  api:
+    build: .
+    container_name: taskmanager_api
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+      DATABASE_URL: postgresql+psycopg://taskuser:taskpass@db:5432/taskdb
+      SECRET_KEY: ma-cle-secrete-super-longue-2024
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
